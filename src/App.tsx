@@ -61,24 +61,71 @@ const borderImages = [
 
 ];
 
-
+const fieldData = {
+    area: {
+        header:{
+            minNo: 1,
+            maxNo: 2
+        },
+        body: {
+            minNo: 3,
+            maxNo: 6
+        },
+        footer: {
+            minNo: 7,
+            maxNo: 7
+        }
+    }
+};
 
 class App extends React.Component<{}, {}> {
 
     state = {
         operation: Operation.create(),
-        sheet: Sheet.create()
+        sheet: Sheet.create(),
+        crossArea: false
 
     };
 
-    onChangeOperation = (prevOperation, nextOperation) => {
-        this.state.operation = nextOperation;
-        return nextOperation;
+    checkCrossArea = () => {
+        const operation = this.state.operation;
+        const rangeItem = operation.rangeItem;
+
+        //没有选择元素
+        if (!rangeItem) {
+            return;
+        }
+
+        let topArea, bottomArea;
+
+        for(var i in fieldData.area){
+            const area = fieldData.area[i];
+            if(rangeItem.minRowNo >= area.minNo && rangeItem.minRowNo <= area.maxNo){
+                topArea = area;
+            }
+
+            if(rangeItem.maxRowNo >= area.minNo && rangeItem.maxRowNo <= area.maxNo){
+                bottomArea = area;
+            }
+        }
+
+        this.setState({
+            crossArea: topArea != bottomArea
+        });
+
+
     }
 
-    onChangeSheet = (prevSheet:Sheet, nextSheet:Sheet) => {
+    onChangeOperation = (prevOperation, nextOperation) => {
+        this.state.operation = nextOperation;
 
-        this.borderHandler.sheet = nextSheet;
+        //检测是否跨区了, 跨区不可以进行合并单元格等操作
+        this.checkCrossArea();
+
+        return nextOperation;
+    };
+
+    onChangeSheet = (prevSheet:Sheet, nextSheet:Sheet) => {
 
         this.setState({
             sheet: nextSheet
@@ -116,6 +163,7 @@ class App extends React.Component<{}, {}> {
         const sheet = this.state.sheet;
         const operation = this.state.operation;
         const rangeItem = operation.rangeItem;
+        this.borderHandler.sheet = sheet;
 
         //没有选择元素
         if (!rangeItem) {
@@ -195,8 +243,8 @@ class App extends React.Component<{}, {}> {
         //内部分割线
         setBorderInnerAll: (left:number, top:number, right:number, bottom:number) => {
             return this.borderHandler
-                .setBorderAll(...arguments)
-                .removeBorderOuterAll(...arguments);
+                .setBorder(BORDER_POSITION.LEFT, left + 1, top, right, bottom)
+                .setBorder(BORDER_POSITION.TOP, left, top + 1, right, bottom);
         },
 
         //内部水平分割线
@@ -402,6 +450,10 @@ class App extends React.Component<{}, {}> {
                     />
                 </div>
 
+                <div>
+                    <div style={styles.title}>是否跨区</div>
+                    {this.state.crossArea ? '跨区':'不跨区'}
+                </div>
                 <div >
                     <div style={styles.title}>文本对齐</div>
                     <div>

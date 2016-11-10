@@ -343,6 +343,10 @@ export class GridView extends React.Component<IGridViewProps, IGridViewState> im
     }
 
     _onStateChange = (sheet, operation) => {
+
+        //如果input失去焦点, 则需要把text写入到当前cell中
+        console.log('input blur', operation);
+
         this._onViewModelChange(sheet);
         this._onOperationChange(operation);
     }

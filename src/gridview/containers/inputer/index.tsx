@@ -74,6 +74,7 @@ export default class Inputer extends React.Component<InputerProps, InputerState>
         // 入力中→入力解除の場合は、変更値をセルに反映させる。
         if ((prevInput.isInputing === true) &&
             (nextProps.opeModel.input.isInputing === false)) {
+            console.log('input save value');
             this._setValue(nextProps);
         }
 
@@ -151,7 +152,7 @@ export default class Inputer extends React.Component<InputerProps, InputerState>
     }
 
     _onBlur = () => {
-        // console.log('input blur');
+        console.log('input blur');
         const input = this.props.opeModel.input.setIsInputing(false);
         const ope = this.props.opeModel.setInput(input);
         this.props.onStateChange(this.props.sheet, ope);
