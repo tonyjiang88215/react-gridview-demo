@@ -1,0 +1,268 @@
+/**
+ * Created by TonyJiang on 16/11/8.
+ */
+import * as React from 'react';
+import {GridView, Sheet} from './gridview';
+import {OBJECT_TYPE} from './gridview/model/sheet/object-type';
+import {ColumnHeader} from "./gridview/model/sheet/column-header";
+import {ColumnHeaderItem} from "./gridview/model/sheet/column-header-item";
+import {Operation} from "./gridview/model/operation/index";
+import {SelectInfo} from "./gridview/model/lib/select/item";
+import {Point} from "./gridview/model/common/point";
+
+class App extends React.Component<{}, {}> {
+
+    state = {
+        // //头部标题部分
+        // headerSheet: Sheet.create(),
+        // //数据源部分
+        // bodySheet: Sheet.create(),
+        // //底部合计部分
+        // footerSheet: Sheet.create(),
+        //
+        // headerOperation: undefined, //Operation.create(),
+        //
+        // bodyOperation: undefined,//Operation.create(),
+        //
+        // footerOperation: undefined//Operation.create()
+
+        sheet: Sheet.create()
+
+    };
+
+    constants = {
+        rowHeaderWidth: 20
+    };
+
+    componentWillMount(){
+
+        // this.state.headerSheet = this.state.headerSheet.editColumnHeader(columnHeader => {
+        //    return columnHeader.setColumnCount(5).setVisible(false);
+        // });
+        //
+        // return;
+
+        this.initSheet();
+
+       }
+
+    initSheet(){
+
+        //设置行头宽度
+        this.state.headerSheet = this._sheetHandler.setRowHeaderWidth(this.state.headerSheet, this.constants.rowHeaderWidth);
+        this.state.bodySheet = this._sheetHandler.setRowHeaderWidth(this.state.bodySheet, this.constants.rowHeaderWidth);
+        this.state.footerSheet = this._sheetHandler.setRowHeaderWidth(this.state.footerSheet, this.constants.rowHeaderWidth);
+
+        //设置第一列宽度
+        this.state.headerSheet = this._sheetHandler.setColumnWidth(this.state.headerSheet, 1, 200);
+        this.state.bodySheet = this._sheetHandler.setColumnWidth(this.state.bodySheet, 1, 200);
+        this.state.footerSheet = this._sheetHandler.setColumnWidth(this.state.footerSheet, 1, 200);
+
+        //隐藏body和footer的列头
+        this.state.bodySheet = this._sheetHandler.setColumnHeaderVisible(this.state.bodySheet, false);
+        this.state.footerSheet = this._sheetHandler.setColumnHeaderVisible(this.state.footerSheet, false);
+
+        // this.state.footerSheet = this._sheetHandler.setRowHeaderVisible(this.state.footerSheet, false);
+        // this.state.bodySheet = this._sheetHandler.setRowHeaderVisible(this.state.bodySheet, false);
+    }
+
+
+    _sheetHandler = {
+        getColumnWidth: (sheet: Sheet, columnIndex: number): number =>{
+           return sheet.columnHeader.items.get(columnIndex).width;
+        },
+
+        setColumnWidth: (sheet: Sheet, columnIndex: number, width: number): Sheet => {
+            const columnHeaderItem = ColumnHeaderItem.create();
+            const newColumnHeaderItem = columnHeaderItem.setWidth(width);
+            const newColumnHeader = sheet.columnHeader.setItem(columnIndex, newColumnHeaderItem);
+
+            return sheet.setColumnHeader(newColumnHeader);
+        },
+
+        setRowHeaderWidth: (sheet: Sheet, width: number): Sheet => {
+            const newRowHeader = sheet.rowHeader.setWidth(width);
+            return sheet.setRowHeader(newRowHeader);
+
+        },
+
+        setColumnHeaderHeight: (sheet: Sheet, height: number): Sheet => {
+            const newColumnHeader = sheet.columnHeader.setHeight(height);
+            return sheet.setColumnHeader(newColumnHeader);
+        },
+
+        setColumnHeaderVisible: (sheet: Sheet, visible: boolean): Sheet => {
+            return sheet
+                .editColumnHeader(columnHeader => {
+                   return columnHeader.setVisible(visible);
+                });
+
+        },
+
+        setRowHeaderVisible: (sheet: Sheet, visible: boolean): Sheet => {
+            return sheet
+                .editRowHeader(rowHeader => {
+                    return rowHeader.setVisible(visible);
+                })
+        }
+    };
+
+    _eventHandler = {
+        //头部改动列宽时, 其他区域同步更新
+        resizeColumnHandler: (operation: Operation) => {
+
+            const objectType = operation.opeItem && operation.opeItem.objectType;
+            const selectItem = operation.selectItem;
+            if (objectType === OBJECT_TYPE.COLUMN_RESIZER && selectItem) {
+                console.log('column resize');
+
+                // 新しい幅を計算酢る
+                const left = selectItem.rect.left;
+                const right = operation.hoverItem.point.x;
+                const width = ((right - left) < 3) ? 3 : right - left;
+
+                // 列アイテムの更新
+                const columnNo = selectItem.cellPoint.columnNo;
+
+                const prevWidth = this._sheetHandler.getColumnWidth(this.state.headerSheet, columnNo);
+
+                console.log(`prevWidth:${prevWidth} width:${width}`)
+                if(prevWidth != width){
+                    this.state.bodySheet = this._sheetHandler.setColumnWidth(this.state.bodySheet, columnNo, width);
+                    this.state.footerSheet = this._sheetHandler.setColumnWidth(this.state.footerSheet, columnNo, width);
+                    return true;
+                }else{
+                    return false;
+                }
+
+            }else{
+                return false;
+            }
+        },
+
+        //点击选中单元格之后, 清除其他区域的选中状态
+        clearInactiveSheetSelection: (key: String, operation: Operation) => {
+            const selectItem = operation.selectItem;
+            // const needUpdate = selectItem && selectItem.objectType === OBJECT_TYPE.CELL && selectItem.cellPoint;
+            const needUpdate = operation.selectItem != (this.state[key] as Operation).selectItem;
+            if (needUpdate) {
+                console.log('needClear');
+                if(key != 'headerOperation'){
+                    console.log('clear header selection');
+                    this.state.headerOperation = this.state.headerOperation.setSelectItem(null);
+                }
+                if(key != 'bodyOperation'){
+                    console.log('clear body selection');
+                    this.state.bodyOperation = this.state.bodyOperation.setSelectItem(null);
+                }
+                if(key != 'footerOperation'){
+                    console.log('clear footer selection');
+                    this.state.footerOperation = this.state.footerOperation.setSelectItem(null);
+                }
+
+            }
+
+            return needUpdate;
+
+        }
+    };
+
+
+
+
+
+    onChangeOperation(key, prevVOperation, nextOperation){
+
+        // this.state[key] = nextOperation;
+
+        console.log('onCHangeOperation', key);
+        // const needUpdate = this._eventHandler.clearInactiveSheetSelection(key, nextOperation);
+
+        // if(needUpdate){
+            // this.forceUpdate();
+        // }
+
+        return this.state[key];
+    }
+
+    onChangeSheet(key, prevSheet, sheet){
+
+        console.log('onChangeSheet', key);
+
+        const needUpdate = this._eventHandler.resizeColumnHandler(this.state.headerOperation);
+
+        if(needUpdate){
+            this.forceUpdate();
+        }
+
+        this.state[key] = sheet;
+
+        return this.state[key];
+    }
+
+    onChangeSheetCapture(prevSheet: Sheet, nextSheet: Sheet){
+
+        this.setState({
+            sheet: nextSheet
+        });
+
+        return nextSheet;
+    }
+
+    getStyles(){
+        return {
+            root: {},
+            header: {
+                width: '100%',
+                height: '200px'
+            },
+            body: {},
+            footer: {}
+        }
+    }
+
+    render(): JSX.Element{
+
+
+        const styles = this.getStyles();
+
+        return (
+            <div >
+                <div style={styles.header} >
+                    <GridView
+                        onChangeSheet={this.onChangeSheetCapture}
+                    />
+                </div>
+                <div>
+                    ${this.state.sheet.toMinJS()}
+                </div>
+
+
+            </div>
+        );
+
+        /*
+
+        <div style={{width: '100%', height: '200px'}} >
+            <GridView
+                ref="body"
+                sheet={this.state.bodySheet}
+                operation={this.state.bodyOperation}
+                onChangeSheet={this.onChangeSheet.bind(this, 'bodySheet')}
+                onChangeOperation={this.onChangeOperation.bind(this, 'bodyOperation')}
+            />
+        </div>
+        <div style={{width: '100%', height: '200px'}} >
+        <GridView
+            ref="footer"
+            sheet={this.state.footerSheet}
+            operation={this.state.footerOperation}
+            onChangeSheet={this.onChangeSheet.bind(this, 'footerSheet')}
+            onChangeOperation={this.onChangeOperation.bind(this, 'footerOperation')}
+        />
+        </div>
+        */
+    }
+}
+
+export default App;

@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "jsx": "react",
+        "moduleResolution": "node",
+        "target": "es5",
+        "outDir": "tmp"
+    },
+    "exclude": [
+        "node_modules",
+        "docs"
+    ]
+}
