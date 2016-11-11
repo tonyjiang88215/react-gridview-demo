@@ -107,6 +107,7 @@ export class GridView extends React.Component<IGridViewProps, IGridViewState> im
     _unmounted:boolean;
 
     componentWillReceiveProps(nextProps:IGridViewProps) {
+        console.log('receiveProps', nextProps.sheet.table.size);
         this.setState((prevState, props) => {
             if (this.props.sheet !== nextProps.sheet) {
                 prevState.sheet = nextProps.sheet;
@@ -216,10 +217,20 @@ export class GridView extends React.Component<IGridViewProps, IGridViewState> im
     }
 
     _onDoubleClick = (e) => {
-        const selectItem = this.state.operation.selectItem;
+
+        const sheet = this.state.sheet;
+        const operation = this.state.operation;
+        const selectItem = operation.selectItem;
+
         if(selectItem){
-            this.refs.inputer.setInputFocus();
+            const newInput = operation.input.setIsInputing(true);
+            this._onOperationChange(operation.setInput(newInput));
         }
+
+        // const selectItem = this.state.operation.selectItem;
+        // if(selectItem){
+        //     this.refs.inputer.setInputFocus();
+        // }
 
     }
 
@@ -318,11 +329,14 @@ export class GridView extends React.Component<IGridViewProps, IGridViewState> im
     _onValueChange = (cellPoint, value) => {
         const sheet = this.state.sheet
             .setValue(cellPoint, value);
+        console.log('valueChange', sheet);
         this._onViewModelChange(sheet);
     }
     _onViewModelChange = (sheet) => {
+        console.log('viewModelChange', sheet.table.size);
         const prevSheet = this.state.sheet;
         const nextSheet = this.props.onChangeSheet(prevSheet, sheet);
+        console.log('nextSheet', nextSheet.table.size);
         if (prevSheet === nextSheet) {
             return;
         }
@@ -345,7 +359,7 @@ export class GridView extends React.Component<IGridViewProps, IGridViewState> im
     _onStateChange = (sheet, operation) => {
 
         //如果input失去焦点, 则需要把text写入到当前cell中
-        console.log('input blur', operation);
+        console.log('stateChange', sheet);
 
         this._onViewModelChange(sheet);
         this._onOperationChange(operation);
@@ -366,6 +380,8 @@ export class GridView extends React.Component<IGridViewProps, IGridViewState> im
         if (this.props.className) {
             className = className + " " + this.props.className;
         }
+
+        console.log('\tgridView render', this.props.sheet.table.size);
 
         return (
             <div className={className} ref="gridview"

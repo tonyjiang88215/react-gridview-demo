@@ -75,17 +75,20 @@ export default class Inputer extends React.Component<InputerProps, InputerState>
         if ((prevInput.isInputing === true) &&
             (nextProps.opeModel.input.isInputing === false)) {
             console.log('input save value');
+            this.setInputBlur();
             this._setValue(nextProps);
         }
 
         // 入力解除→入力の場合は、セルの値を削除する
         if ((prevInput.isInputing === false) &&
             (nextProps.opeModel.input.isInputing === true)) {
-            //this.setState({inputText: ""});
-            this.setState((prevState, props) => {
-                prevState.inputText = "";
-                return prevState;
-            });
+            this.setInputFocus();
+            this.state.inputText = "";
+
+            // this.setState((prevState, props) => {
+            //     prevState.inputText = "";
+            //     return prevState;
+            // });
         }
 
         const prevSelectItem = this.props.opeModel.selectItem;
@@ -95,10 +98,11 @@ export default class Inputer extends React.Component<InputerProps, InputerState>
             (!prevSelectItem.cellPoint) ||
             (!prevSelectItem.cellPoint.equals(nextSelectItem.cellPoint))) {
             //this.setState({controlCellPoint: null});
-            this.setState((prevState, props) => {
-                prevState.controlCellPoint = null;
-                return prevState;
-            });
+            // this.setState((prevState, props) => {
+            //     prevState.controlCellPoint = null;
+            //     return prevState;
+            // });
+            this.state.controlCellPoint = null;
         }
 
     }
@@ -107,7 +111,7 @@ export default class Inputer extends React.Component<InputerProps, InputerState>
         if (prevProps.opeModel.selectItem !== this.props.opeModel.selectItem){
             // console.log('setInputFocus');
 
-            this.setInputBlur();
+            // this.setInputBlur();
             // this.setInputFocus();
         }
         
@@ -152,7 +156,7 @@ export default class Inputer extends React.Component<InputerProps, InputerState>
     }
 
     _onBlur = () => {
-        console.log('input blur');
+        console.log('input blur', this.props.sheet.table.size);
         const input = this.props.opeModel.input.setIsInputing(false);
         const ope = this.props.opeModel.setInput(input);
         this.props.onStateChange(this.props.sheet, ope);
@@ -170,6 +174,7 @@ export default class Inputer extends React.Component<InputerProps, InputerState>
     }
 
     render() {
+        console.log('\t\tinput render', this.props.sheet.table.size);
         const style = createInputStyle(this.props.sheet, this.props.opeModel);
         const value = this.props.opeModel.input.text;
 

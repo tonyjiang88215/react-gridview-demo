@@ -120,13 +120,14 @@ class App extends React.Component<{}, {}> {
         this.state.operation = nextOperation;
 
         //检测是否跨区了, 跨区不可以进行合并单元格等操作
-        this.checkCrossArea();
+        // this.checkCrossArea();
 
         return nextOperation;
     };
 
     onChangeSheet = (prevSheet:Sheet, nextSheet:Sheet) => {
 
+        // this.state.sheet = nextSheet;
         this.setState({
             sheet: nextSheet
         });
@@ -433,6 +434,7 @@ class App extends React.Component<{}, {}> {
 
     render():JSX.Element {
 
+        console.log('appRender', this.state.sheet.table.size);
 
         const styles = this.getStyles();
 
